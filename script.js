@@ -106,7 +106,16 @@ function showStep() {
   // Update buttons
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
+  const submitBtn = document.getElementById('submitBtn');
   prevBtn.disabled = currentStep === 1;
+  // When on the last step, hide the Next button and show the Submit button
+  if (currentStep === totalSteps) {
+    nextBtn.classList.add('hidden');
+    submitBtn.classList.remove('hidden');
+  } else {
+    nextBtn.classList.remove('hidden');
+    submitBtn.classList.add('hidden');
+  }
   nextBtn.textContent = currentStep === totalSteps ? 'Finish' : 'Next';
 }
 
@@ -389,3 +398,54 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPayrollReports();
   renderInterfaces();
 });
+
+/**
+ * Gather all form data from the wizard and send it to the backend service.
+ * The backend is expected to be running on localhost:3000/submit.
+ */
+function submitData() {
+  // Collect values from all inputs, textareas and selects using their placeholder as a key
+  const data = {};
+  const elements = document.querySelectorAll('input, textarea, select');
+  elements.forEach((el) => {
+    // Skip buttons
+    if (el.type === 'button' || el.type === 'submit' || el.type === 'reset') return;
+    // Determine key
+    const key = el.name || el.id || el.placeholder || el.dataset.label || `field_${Math.random().toString(36).substr(2, 5)}`;
+    let value;
+    if (el.type === 'checkbox') {
+      value = el.checked;
+    } else {
+      value = el.value;
+    }
+    // If key already exists and is not an array, convert to array
+    if (data[key] !== undefined) {
+      if (!Array.isArray(data[key])) {
+        data[key] = [data[key]];
+      }
+      data[key].push(value);
+    } else {
+      data[key] = value;
+    }
+  });
+  // Attach dynamic table data
+  data.payments = payments;
+  data.deductions = deductions;
+  data.redundancies = redundancies;
+  data.payrollReports = payrollReports;
+  data.interfaces = interfaces;
+  // Send data to backend
+  fetch('http://localhost:3000/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+    .then((res) => res.json())
+    .then((resData) => {
+      alert(resData.message || 'Data submitted successfully!');
+    })
+    .catch((err) => {
+      console.error(err);
+      alert('There was an error submitting your data. Please ensure the backend is running.');
+    });
+}

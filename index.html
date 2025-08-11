@@ -505,7 +505,10 @@
         <!-- Navigation buttons -->
         <div class="flex justify-between mt-6">
           <button id="prevBtn" type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded disabled:opacity-50" onclick="prevStep()">Previous</button>
+          <!-- Next button shown on all but final step -->
           <button id="nextBtn" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded" onclick="nextStep()">Next</button>
+          <!-- Submit button shown on final step only -->
+          <button id="submitBtn" type="button" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded hidden" onclick="submitData()">Submit</button>
         </div>
       </main>
     </div>

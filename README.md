@@ -15,16 +15,35 @@ Each step captures specific information about the organisation’s payroll requi
 
 ## Running the application
 
-No build tools are necessary. Simply open the `index.html` file in your web browser. All dependencies (Tailwind CSS) are loaded from a CDN, and the accompanying JavaScript (`script.js`) contains all interactive logic.
+This repository now contains both a lightweight **backend** and a **frontend**. The backend is a simple Node.js server that accepts JSON submissions and persists them to disk. The frontend is still a static HTML/JS wizard which will POST the collected data to the backend when the final step is reached.
+
+1. **Start the backend server**
+
+   From the root of the project directory, run the following command to start the HTTP server on port 3000:
+
+   ```bash
+   node server.js
+   ```
+
+   The server will listen for POST requests at `/submit` and will save the submitted data to a `data.json` file in the project root.
+   You can inspect this file after submission to view the captured workshop responses.
+
+2. **Open the frontend**
+
+   Open the `index.html` file in your preferred web browser. Proceed through the steps as before. When you reach the final step, a **Submit** button will appear. Clicking this button will send your form data to `http://localhost:3000/submit`.
+
+   If the backend is running, you will receive a confirmation message and the data will be stored in `backend/data.json`.
 
 ## Folder structure
 
 ```
 sap-payroll-workshop/
-├── index.html     # Main HTML document with the stepper and form content
-├── script.js      # JavaScript functions for navigation and dynamic tables
-├── payslip.png    # Generated sample payslip used in step 12
-└── README.md      # This readme file
+├── server.js           # Node.js server handling POST submissions and persisting data
+├── data.json          # Automatically created file containing the last submitted data
+├── index.html          # Main HTML document with the stepper and form content
+├── script.js           # JavaScript functions for navigation, dynamic tables and API submission
+├── payslip.png         # Generated sample payslip used in the interactive payslip step
+└── README.md           # This readme file
 ```
 
 ## Notes
