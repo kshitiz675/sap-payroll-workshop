@@ -32,7 +32,22 @@ This repository now contains both a lightweight **backend** and a **frontend**. 
 
    Open the `index.html` file in your preferred web browser. Proceed through the steps as before. When you reach the final step, a **Submit** button will appear. Clicking this button will send your form data to `http://localhost:3000/submit`.
 
-   If the backend is running, you will receive a confirmation message and the data will be stored in `backend/data.json`.
+   If the backend is running, you will receive a confirmation message and the data will be stored in `data.json` in the project root.
+
+### Using the React frontend
+
+In addition to the original static HTML/JS wizard, this repository now includes a **React** implementation of the workshop tool located in the `react-frontend/` directory.  
+This version uses React (loaded from a CDN) and Babel to transpile JSX in the browser on the fly while still leveraging Tailwind CSS for styling.
+
+To try the React version:
+
+1. Ensure the backend server is running (`node server.js`).
+2. Open `react-frontend/index.html` in your browser.  
+   The React application will load, and you can step through the wizard just like the vanilla version.
+3. On the final step, click **Submit** to send your data to `http://localhost:3000/submit`.
+
+This approach avoids a build step and makes it easy to experiment with the React code.  
+If you prefer to integrate it into a full React tooling setup (e.g. Create React App or Vite), you can extract the `App` component defined in the script tag and move it into your preferred project structure.
 
 ## Folder structure
 
@@ -43,6 +58,7 @@ sap-payroll-workshop/
 ├── index.html          # Main HTML document with the stepper and form content
 ├── script.js           # JavaScript functions for navigation, dynamic tables and API submission
 ├── payslip.png         # Generated sample payslip used in the interactive payslip step
+├── react-frontend/      # React implementation of the wizard (HTML + embedded JSX)
 └── README.md           # This readme file
 ```
 

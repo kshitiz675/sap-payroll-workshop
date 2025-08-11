@@ -3,517 +3,804 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SAP Australian Payroll Workshop Tool</title>
-  <!-- Tailwind CSS via CDN for quick styling -->
+  <title>SAP Payroll Workshop – React</title>
+  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* Custom styles for the stepper */
-    .step-item .step-circle {
-      @apply w-8 h-8 flex items-center justify-center rounded-full border-2 border-gray-400 text-gray-600 font-medium transition-colors duration-300;
-    }
-    .step-item.active .step-circle {
-      @apply bg-blue-600 border-blue-600 text-white;
-    }
-    .step-item.completed .step-circle {
-      @apply bg-green-600 border-green-600 text-white;
-    }
-    .step-item .step-title {
-      @apply text-gray-600 font-medium;
-    }
-    .step-item.active .step-title {
-      @apply text-blue-700 font-semibold;
-    }
-    .step-item.completed .step-title {
-      @apply text-green-700;
-    }
-    .form-section {
-      display: none;
-    }
-    .form-section.active {
-      display: block;
-    }
-  </style>
+  <!-- React and ReactDOM via UNPKG -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel standalone for in‑browser JSX transpilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
-  <div class="container mx-auto px-4 py-8">
-    <header class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-blue-700">SAP Australian Payroll Implementation</h1>
-      <p class="text-gray-600 mt-2">Requirements Gathering Workshop Tool</p>
-    </header>
-    <div class="flex flex-col md:flex-row gap-8">
-      <!-- Stepper -->
-      <aside class="md:w-1/4">
-        <nav id="stepper" class="space-y-4">
-          <!-- Step definitions. Each step-item will be manipulated via JS -->
-          <div class="step-item flex items-center space-x-3" data-step="1">
-            <div class="step-circle">1</div>
-            <span class="step-title">Project Details</span>
+  <div id="root"></div>
+
+  <!-- React application script compiled by Babel on the fly -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    /**
+     * React implementation of the multi‑step wizard.  
+     * This component preserves the overall structure and behaviour of the
+     * original vanilla JavaScript version while leveraging React state
+     * management for navigation and dynamic table interactions.
+     */
+    function App() {
+      const totalSteps = 13;
+      const [currentStep, setCurrentStep] = useState(1);
+      // Dynamic tables state
+      const [payments, setPayments] = useState([]);
+      const [deductions, setDeductions] = useState([]);
+      const [redundancies, setRedundancies] = useState([]);
+      const [payrollReports, setPayrollReports] = useState([]);
+      const [interfaces, setInterfaces] = useState([]);
+      const [payslipVisible, setPayslipVisible] = useState(false);
+
+      // Award data replicated from the original tool
+      const awardsByIndustry = {
+        education: ['Teachers Award', 'Education Services (Post‑Secondary) Award'],
+        health: ['Nurses Award', 'Aged Care Award', 'Health Services Award'],
+        it: ['Professional Services Award', 'Clerks—Private Sector Award'],
+        retail: ['General Retail Award', 'Fast Food Industry Award'],
+        hospitality: ['Hospitality Industry (General) Award', 'Restaurant Industry Award'],
+      };
+      const awardDetails = {
+        'Teachers Award':
+          'This award sets the minimum pay and conditions for teachers employed in non‑government schools. It includes provisions for overtime, allowances and leave.',
+        'Education Services (Post‑Secondary) Award':
+          'Applicable to staff working in universities and colleges. It covers pay rates, classifications and allowances for administrative and academic roles.',
+        'Nurses Award':
+          'Provides minimum pay and employment conditions for nurses and midwives across Australia, including shift penalties and allowances.',
+        'Aged Care Award':
+          'Covers aged care employees such as personal carers and support staff. It outlines pay scale, allowances and rostering provisions.',
+        'Health Services Award':
+          'Applies to allied health, administrative and ancillary employees in the health sector. It details entitlements like overtime and allowances.',
+        'Professional Services Award':
+          'Covers professionals working in consulting and IT services. It includes classifications, pay scales and overtime provisions.',
+        'Clerks—Private Sector Award':
+          'Applies to clerical and administrative employees across many industries, with provisions for ordinary hours, penalties and leave.',
+        'General Retail Award':
+          'Sets minimum pay rates and conditions for employees in the retail sector, including penalty rates for weekends and public holidays.',
+        'Fast Food Industry Award':
+          'Applies to businesses selling takeaway food. It outlines pay rates, allowances and overtime conditions for employees.',
+        'Hospitality Industry (General) Award':
+          'Provides pay and conditions for hospitality workers such as hotel and catering staff, covering allowances and penalty rates.',
+        'Restaurant Industry Award':
+          'Applies to employees in restaurants and cafés. It sets out pay rates, classifications and penalty provisions.',
+      };
+      const configOptions = {
+        tax: {
+          'tax-scale': 'The tax scale determines how much income tax is withheld from an employee’s pay based on residency and TFN declaration.',
+          'tax-threshold': 'The tax threshold sets the income level at which tax becomes payable; earnings below this threshold are tax‑free.',
+        },
+        stp: {
+          rfb: 'Reportable fringe benefits settings ensure that taxable value of fringe benefits is correctly reported to the ATO via STP.',
+          'foreign-income': 'Configure foreign income options for employees working overseas so that correct values are reported for tax and STP purposes.',
+        },
+        payslip: {
+          'deduction-display': 'Controls how deductions (e.g. salary sacrifice, garnishees) are presented on employee payslips.',
+          'year-to-date': 'Enables or disables year‑to‑date amounts on payslips for earnings, deductions and super.',
+        },
+      };
+
+      // Navigation handlers
+      const nextStep = () => {
+        if (currentStep < totalSteps) setCurrentStep((s) => s + 1);
+      };
+      const prevStep = () => {
+        if (currentStep > 1) setCurrentStep((s) => s - 1);
+      };
+
+      // Payment functions
+      const addPayment = () => {
+        const nameEl = document.getElementById('payment-name');
+        const descEl = document.getElementById('payment-desc');
+        const taxable = document.getElementById('payment-taxable').value;
+        const superVal = document.getElementById('payment-super').value;
+        const name = nameEl.value.trim();
+        const desc = descEl.value.trim();
+        if (!name) {
+          alert('Please enter a payment name.');
+          return;
+        }
+        setPayments((arr) => [...arr, { name, desc, taxable, super: superVal }]);
+        nameEl.value = '';
+        descEl.value = '';
+      };
+      const removePayment = (idx) => {
+        setPayments((arr) => arr.filter((_, i) => i !== idx));
+      };
+
+      // Deduction functions
+      const addDeduction = () => {
+        const nameEl = document.getElementById('deduction-name');
+        const descEl = document.getElementById('deduction-desc');
+        const name = nameEl.value.trim();
+        const desc = descEl.value.trim();
+        if (!name) {
+          alert('Please enter a deduction name.');
+          return;
+        }
+        setDeductions((arr) => [...arr, { name, desc }]);
+        nameEl.value = '';
+        descEl.value = '';
+      };
+      const removeDeduction = (idx) => {
+        setDeductions((arr) => arr.filter((_, i) => i !== idx));
+      };
+
+      // Redundancy functions
+      const addRedundancy = () => {
+        const yearsVal = parseFloat(document.getElementById('redundancy-years').value);
+        const weeksVal = parseFloat(document.getElementById('redundancy-weeks').value);
+        if (isNaN(yearsVal) || isNaN(weeksVal)) {
+          alert('Please enter both years of service and redundancy pay.');
+          return;
+        }
+        setRedundancies((arr) => [...arr, { years: yearsVal, weeks: weeksVal }]);
+        document.getElementById('redundancy-years').value = '';
+        document.getElementById('redundancy-weeks').value = '';
+      };
+      const removeRedundancy = (idx) => {
+        setRedundancies((arr) => arr.filter((_, i) => i !== idx));
+      };
+
+      // Payroll reports functions
+      const addPayrollReport = () => {
+        const inScope = document.getElementById('report-in-scope').value;
+        const name = document.getElementById('report-name').value.trim();
+        const program = document.getElementById('report-program').value.trim();
+        const transaction = document.getElementById('report-transaction').value.trim();
+        if (!name) {
+          alert('Please enter a report name.');
+          return;
+        }
+        setPayrollReports((arr) => [...arr, { inScope, name, program, transaction }]);
+        document.getElementById('report-name').value = '';
+        document.getElementById('report-program').value = '';
+        document.getElementById('report-transaction').value = '';
+      };
+      const removePayrollReport = (idx) => {
+        setPayrollReports((arr) => arr.filter((_, i) => i !== idx));
+      };
+
+      // Interfaces functions
+      const addInterface = () => {
+        const direction = document.getElementById('interface-direction').value;
+        const system = document.getElementById('interface-system').value.trim();
+        const desc = document.getElementById('interface-desc').value.trim();
+        if (!system) {
+          alert('Please enter an interface system.');
+          return;
+        }
+        setInterfaces((arr) => [...arr, { direction, system, desc }]);
+        document.getElementById('interface-system').value = '';
+        document.getElementById('interface-desc').value = '';
+      };
+      const removeInterface = (idx) => {
+        setInterfaces((arr) => arr.filter((_, i) => i !== idx));
+      };
+
+      // Award analysis
+      const [selectedIndustry, setSelectedIndustry] = useState('');
+      const [selectedAward, setSelectedAward] = useState('');
+      const [awardInfo, setAwardInfo] = useState('');
+      const analyseAward = () => {
+        if (!selectedAward) {
+          alert('Please select an award to analyse.');
+          return;
+        }
+        setAwardInfo(awardDetails[selectedAward] || 'No details available for the selected award.');
+      };
+
+      // AI Config explainer
+      const [selectedArea, setSelectedArea] = useState('');
+      const [selectedConfig, setSelectedConfig] = useState('');
+      const [configExplanation, setConfigExplanation] = useState('');
+      useEffect(() => {
+        // Reset explanation when values change
+        setConfigExplanation('');
+      }, [selectedArea, selectedConfig]);
+      const explainConfig = () => {
+        if (!selectedArea || !selectedConfig) {
+          alert('Please select a configuration area and setting.');
+          return;
+        }
+        const explanation = configOptions[selectedArea][selectedConfig];
+        setConfigExplanation(explanation);
+      };
+
+      // Payslip toggling
+      const togglePayslip = () => {
+        setPayslipVisible((vis) => !vis);
+      };
+
+      /**
+       * Collect all form values (uncontrolled inputs) and the dynamic arrays,
+       * then send them to the backend endpoint. This mirrors the original
+       * submitData function and uses DOM queries for simplicity.
+       */
+      const submitData = () => {
+        const data = {};
+        const elements = document.querySelectorAll('input, textarea, select');
+        elements.forEach((el) => {
+          if (el.type === 'button' || el.type === 'submit' || el.type === 'reset') return;
+          const key = el.name || el.id || el.placeholder || el.dataset.label || `field_${Math.random().toString(36).substr(2, 5)}`;
+          let value;
+          if (el.type === 'checkbox') {
+            value = el.checked;
+          } else {
+            value = el.value;
+          }
+          if (data[key] !== undefined) {
+            if (!Array.isArray(data[key])) data[key] = [data[key]];
+            data[key].push(value);
+          } else {
+            data[key] = value;
+          }
+        });
+        data.payments = payments;
+        data.deductions = deductions;
+        data.redundancies = redundancies;
+        data.payrollReports = payrollReports;
+        data.interfaces = interfaces;
+        fetch('http://localhost:3000/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+          .then((res) => res.json())
+          .then((resData) => {
+            alert(resData.message || 'Data submitted successfully!');
+          })
+          .catch((err) => {
+            console.error(err);
+            alert('There was an error submitting your data. Please ensure the backend is running.');
+          });
+      };
+
+      // Stepper titles for display
+      const stepTitles = [
+        'Project Details',
+        'Introduction',
+        'Enterprise Structure',
+        'Taxation & Super',
+        'Time Off / Leave',
+        'Awards & Agreements',
+        'Payroll Processing',
+        'Termination & Redundancy',
+        'AI Config Explainer',
+        'Finance Integration',
+        'Payroll Control Centre',
+        'Interactive Payslip',
+        'Reporting & Interfaces',
+      ];
+
+      /** Renders the stepper UI */
+      const renderStepper = () => {
+        return (
+          <nav id="stepper" className="space-y-4">
+            {stepTitles.map((title, idx) => {
+              const step = idx + 1;
+              const isActive = step === currentStep;
+              const isCompleted = step < currentStep;
+              return (
+                <div
+                  key={step}
+                  className={`step-item flex items-center space-x-3 ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                  data-step={step}
+                >
+                  <div className={`step-circle w-8 h-8 flex items-center justify-center rounded-full border-2 transition-colors duration-300 ${isActive ? 'bg-blue-600 border-blue-600 text-white' : isCompleted ? 'bg-green-600 border-green-600 text-white' : 'border-gray-400 text-gray-600'}`}>{step}</div>
+                  <span className={`step-title ${isActive ? 'text-blue-700 font-semibold' : isCompleted ? 'text-green-700' : 'text-gray-600 font-medium'}`}>{title}</span>
+                </div>
+              );
+            })}
+          </nav>
+        );
+      };
+
+      /** Each form step is rendered conditionally based on currentStep */
+      const renderStepContent = () => {
+        switch (currentStep) {
+          case 1:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">1. Project Details</h2>
+                <div className="grid gap-4">
+                  <div>
+                    <label htmlFor="customer-name" className="font-semibold text-gray-700">Customer Name</label>
+                    <input type="text" id="customer-name" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Enter the customer's company name..." />
+                  </div>
+                  <div>
+                    <label htmlFor="provider-name" className="font-semibold text-gray-700">Provider Name</label>
+                    <input type="text" id="provider-name" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Enter the implementation provider's name..." />
+                  </div>
+                </div>
+              </section>
+            );
+          case 2:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">2. Introduction</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="overview" className="font-semibold text-gray-700">2.1 Overview</label>
+                    <textarea id="overview" rows="4" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the overall objectives of the project..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="purpose" className="font-semibold text-gray-700">2.2 Document Purpose</label>
+                    <textarea id="purpose" rows="4" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="What is the purpose of this document?"></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="scope" className="font-semibold text-gray-700">2.3 Project Scope</label>
+                    <textarea id="scope" rows="4" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Outline the scope of the project..."></textarea>
+                  </div>
+                </div>
+              </section>
+            );
+          case 3:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">3. Enterprise Structure</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="company-code" className="font-semibold text-gray-700">3.1 Company Code & Bank Details</label>
+                    <textarea id="company-code" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the company codes and banking details..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="locations" className="font-semibold text-gray-700">3.2 Locations / Personnel Subareas</label>
+                    <textarea id="locations" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="List the key locations and personnel subareas..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="employee-groupings" className="font-semibold text-gray-700">3.3 Employee Groupings</label>
+                    <textarea id="employee-groupings" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the employee groupings (e.g. salaried, hourly)..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="payroll-areas" className="font-semibold text-gray-700">3.4 Payroll Areas & Pay Cycles</label>
+                    <textarea id="payroll-areas" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Specify payroll areas and pay cycles..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="pay-scale" className="font-semibold text-gray-700">3.5 Pay Scale Structure</label>
+                    <textarea id="pay-scale" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the pay scale structure..."></textarea>
+                  </div>
+                </div>
+              </section>
+            );
+          case 4:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">4. Taxation &amp; Superannuation</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="tax-unique" className="font-semibold text-gray-700">TFN &amp; Tax Scale Details</label>
+                    <textarea id="tax-unique" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe TFN declaration requirements and tax scale details..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="super-setup" className="font-semibold text-gray-700">Superannuation Setup</label>
+                    <textarea id="super-setup" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the superannuation funds and default percentages..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="stp-requirements" className="font-semibold text-gray-700">Single Touch Payroll (STP) Reporting Requirements</label>
+                    <textarea id="stp-requirements" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Outline any specific STP reporting requirements..."></textarea>
+                  </div>
+                </div>
+              </section>
+            );
+          case 5:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">5. Time Off / Leave</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="leave-accrual" className="font-semibold text-gray-700">Leave Accrual Rules</label>
+                    <textarea id="leave-accrual" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe leave accrual rates and caps..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="leave-entitlements" className="font-semibold text-gray-700">Leave Entitlements</label>
+                    <textarea id="leave-entitlements" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Outline leave types such as annual leave, sick leave, long service leave..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="leave-approval" className="font-semibold text-gray-700">Leave Approval Process</label>
+                    <textarea id="leave-approval" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the workflow for requesting and approving leave..."></textarea>
+                  </div>
+                </div>
+              </section>
+            );
+          case 6:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">6. Awards &amp; Agreements</h2>
+                <div className="grid gap-4">
+                  <div>
+                    <label htmlFor="industry-select" className="font-semibold text-gray-700">Select Industry</label>
+                    <select id="industry-select" value={selectedIndustry} onChange={(e) => { setSelectedIndustry(e.target.value); setSelectedAward(''); setAwardInfo(''); }} className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                      <option value="">Choose an industry...</option>
+                      {Object.keys(awardsByIndustry).map((ind) => (
+                        <option key={ind} value={ind}>{ind.charAt(0).toUpperCase() + ind.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="award-select" className="font-semibold text-gray-700">Select Award</label>
+                    <select id="award-select" value={selectedAward} onChange={(e) => { setSelectedAward(e.target.value); setAwardInfo(''); }} className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                      <option value="">Choose an award...</option>
+                      {selectedIndustry && awardsByIndustry[selectedIndustry] && awardsByIndustry[selectedIndustry].map((award) => (
+                        <option key={award} value={award}>{award}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <button type="button" onClick={analyseAward} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Analyse Award</button>
+                  </div>
+                  {awardInfo && (
+                    <div className="border rounded p-4 bg-gray-100">
+                      <h4 className="font-semibold mb-2">{selectedAward}</h4>
+                      <p>{awardInfo}</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+          case 7:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">7. Payroll Processing</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="pay-periods" className="font-semibold text-gray-700">Pay Periods</label>
+                    <textarea id="pay-periods" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe pay period frequency and cutoff dates..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="allowances" className="font-semibold text-gray-700">Payment Catalogue</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                      <div>
+                        <input type="text" id="payment-name" placeholder="Payment name" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div>
+                        <input type="text" id="payment-desc" placeholder="Description" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div>
+                        <select id="payment-taxable" className="w-full p-2 border rounded-md">
+                          <option value="Y">Taxable</option>
+                          <option value="N">Non‑taxable</option>
+                        </select>
+                      </div>
+                      <div>
+                        <select id="payment-super" className="w-full p-2 border rounded-md">
+                          <option value="Y">Super Applies</option>
+                          <option value="N">No Super</option>
+                        </select>
+                      </div>
+                      <div className="md:col-span-2">
+                        <button type="button" onClick={addPayment} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Add Payment</button>
+                      </div>
+                    </div>
+                    <table className="w-full mt-4 text-sm border">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-2 border">Name</th>
+                          <th className="p-2 border">Description</th>
+                          <th className="p-2 border">Taxable</th>
+                          <th className="p-2 border">Super</th>
+                          <th className="p-2 border">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="payment-table-body">
+                        {payments.map((p, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2 border">{p.name}</td>
+                            <td className="p-2 border">{p.desc}</td>
+                            <td className="p-2 border text-center">{p.taxable}</td>
+                            <td className="p-2 border text-center">{p.super}</td>
+                            <td className="p-2 border text-center"><button className="text-red-600" onClick={() => removePayment(idx)}>Remove</button></td>
+                          </tr>
+                        ))}
+                        {payments.length === 0 && (
+                          <tr><td className="p-2 border text-center" colSpan="5">No payments added</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <label htmlFor="deductions-cat" className="font-semibold text-gray-700">Deduction Catalogue</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                      <div>
+                        <input type="text" id="deduction-name" placeholder="Deduction name" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div>
+                        <input type="text" id="deduction-desc" placeholder="Description" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <button type="button" onClick={addDeduction} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Add Deduction</button>
+                      </div>
+                    </div>
+                    <table className="w-full mt-4 text-sm border">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-2 border">Name</th>
+                          <th className="p-2 border">Description</th>
+                          <th className="p-2 border">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="deduction-table-body">
+                        {deductions.map((d, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2 border">{d.name}</td>
+                            <td className="p-2 border">{d.desc}</td>
+                            <td className="p-2 border text-center"><button className="text-red-600" onClick={() => removeDeduction(idx)}>Remove</button></td>
+                          </tr>
+                        ))}
+                        {deductions.length === 0 && (
+                          <tr><td className="p-2 border text-center" colSpan="3">No deductions added</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            );
+          case 8:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">8. Termination & Redundancy</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="termination-rules" className="font-semibold text-gray-700">Termination Rules</label>
+                    <textarea id="termination-rules" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe notice periods, payout rules and entitlements..."></textarea>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-gray-700">Redundancy Pay Scale</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                      <div>
+                        <input type="number" id="redundancy-years" placeholder="Years of service" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div>
+                        <input type="number" id="redundancy-weeks" placeholder="Weeks pay" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div>
+                        <button type="button" onClick={addRedundancy} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded w-full">Add</button>
+                      </div>
+                    </div>
+                    <table className="w-full mt-4 text-sm border">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-2 border">Years</th>
+                          <th className="p-2 border">Weeks</th>
+                          <th className="p-2 border">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="redundancy-table-body">
+                        {redundancies.map((r, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2 border text-center">{r.years}</td>
+                            <td className="p-2 border text-center">{r.weeks}</td>
+                            <td className="p-2 border text-center"><button className="text-red-600" onClick={() => removeRedundancy(idx)}>Remove</button></td>
+                          </tr>
+                        ))}
+                        {redundancies.length === 0 && (
+                          <tr><td className="p-2 border text-center" colSpan="3">No redundancy entries</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            );
+          case 9:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">9. AI Config Explainer</h2>
+                <div className="grid gap-4">
+                  <div>
+                    <label htmlFor="config-area" className="font-semibold text-gray-700">Configuration Area</label>
+                    <select id="config-area" value={selectedArea} onChange={(e) => { setSelectedArea(e.target.value); setSelectedConfig(''); }} className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                      <option value="">Select area...</option>
+                      {Object.keys(configOptions).map((area) => (
+                        <option key={area} value={area}>{area.toUpperCase()}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="config-value" className="font-semibold text-gray-700">Configuration Value</label>
+                    <select id="config-value" value={selectedConfig} onChange={(e) => setSelectedConfig(e.target.value)} className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                      <option value="">Select setting...</option>
+                      {selectedArea && Object.keys(configOptions[selectedArea]).map((key) => (
+                        <option key={key} value={key}>{key.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <button type="button" onClick={explainConfig} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Explain Config</button>
+                  </div>
+                  {configExplanation && (
+                    <div className="border rounded p-4 bg-gray-100">
+                      <h4 className="font-semibold mb-2">{selectedConfig.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</h4>
+                      <p>{configExplanation}</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+          case 10:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">10. Finance Integration</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="finance-systems" className="font-semibold text-gray-700">Finance Systems</label>
+                    <textarea id="finance-systems" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="List finance systems to integrate with (e.g. SAP FI, external GL)..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="posting-rules" className="font-semibold text-gray-700">Posting Rules</label>
+                    <textarea id="posting-rules" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe payroll posting rules, cost centres and accounts..."></textarea>
+                  </div>
+                </div>
+              </section>
+            );
+          case 11:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">11. Payroll Control Centre</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="pcc-key-kpis" className="font-semibold text-gray-700">Key KPIs</label>
+                    <textarea id="pcc-key-kpis" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="List KPIs to monitor in the PCC (e.g. gross to net variance)..."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="pcc-alerts" className="font-semibold text-gray-700">Alerts</label>
+                    <textarea id="pcc-alerts" rows="3" className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe alerts for configuration errors or data issues..."></textarea>
+                  </div>
+                </div>
+              </section>
+            );
+          case 12:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">12. Interactive Payslip</h2>
+                <p className="mb-4">Click the button below to preview a sample payslip.</p>
+                <button type="button" onClick={togglePayslip} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">{payslipVisible ? 'Hide Payslip' : 'Show Payslip'}</button>
+                {payslipVisible && (
+                  <div id="payslip-container" className="mt-4 border rounded p-4 bg-gray-100">
+                    <img id="payslip-image" src="../payslip.png" alt="Sample Payslip" className="max-w-full" />
+                  </div>
+                )}
+              </section>
+            );
+          case 13:
+            return (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-blue-700">13. Reporting & Interfaces</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label className="font-semibold text-gray-700">Payroll Reports</label>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                      <div>
+                        <select id="report-in-scope" className="w-full p-2 border rounded-md">
+                          <option value="Y">In Scope</option>
+                          <option value="N">Out of Scope</option>
+                        </select>
+                      </div>
+                      <div>
+                        <input type="text" id="report-name" placeholder="Report name" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div>
+                        <input type="text" id="report-program" placeholder="Program" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div>
+                        <input type="text" id="report-transaction" placeholder="Transaction" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div className="md:col-span-4">
+                        <button type="button" onClick={addPayrollReport} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Add Report</button>
+                      </div>
+                    </div>
+                    <table className="w-full mt-4 text-sm border">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-2 border">In Scope</th>
+                          <th className="p-2 border">Name</th>
+                          <th className="p-2 border">Program</th>
+                          <th className="p-2 border">Transaction</th>
+                          <th className="p-2 border">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="payroll-reports-body">
+                        {payrollReports.map((r, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2 border text-center">{r.inScope}</td>
+                            <td className="p-2 border">{r.name}</td>
+                            <td className="p-2 border">{r.program}</td>
+                            <td className="p-2 border">{r.transaction}</td>
+                            <td className="p-2 border text-center"><button className="text-red-600" onClick={() => removePayrollReport(idx)}>Remove</button></td>
+                          </tr>
+                        ))}
+                        {payrollReports.length === 0 && (
+                          <tr><td className="p-2 border text-center" colSpan="5">No reports added</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-gray-700">Interfaces</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                      <div>
+                        <select id="interface-direction" className="w-full p-2 border rounded-md">
+                          <option value="Outbound">Outbound</option>
+                          <option value="Inbound">Inbound</option>
+                        </select>
+                      </div>
+                      <div>
+                        <input type="text" id="interface-system" placeholder="System name" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div>
+                        <input type="text" id="interface-desc" placeholder="Description" className="w-full p-2 border rounded-md" />
+                      </div>
+                      <div className="md:col-span-3">
+                        <button type="button" onClick={addInterface} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Add Interface</button>
+                      </div>
+                    </div>
+                    <table className="w-full mt-4 text-sm border">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-2 border">Direction</th>
+                          <th className="p-2 border">System</th>
+                          <th className="p-2 border">Description</th>
+                          <th className="p-2 border">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="interface-table-body">
+                        {interfaces.map((i, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2 border text-center">{i.direction}</td>
+                            <td className="p-2 border">{i.system}</td>
+                            <td className="p-2 border">{i.desc}</td>
+                            <td className="p-2 border text-center"><button className="text-red-600" onClick={() => removeInterface(idx)}>Remove</button></td>
+                          </tr>
+                        ))}
+                        {interfaces.length === 0 && (
+                          <tr><td className="p-2 border text-center" colSpan="4">No interfaces added</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            );
+          default:
+            return null;
+        }
+      };
+
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <header className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-blue-700">SAP Australian Payroll Implementation</h1>
+            <p className="text-gray-600 mt-2">Requirements Gathering Workshop Tool (React)</p>
+          </header>
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Stepper */}
+            <aside className="md:w-1/4">
+              {renderStepper()}
+            </aside>
+            {/* Form content */}
+            <main className="md:w-3/4 flex-1 bg-white p-6 rounded-lg shadow">
+              {renderStepContent()}
+              {/* Navigation buttons */}
+              <div className="flex justify-between mt-6">
+                <button type="button" onClick={prevStep} disabled={currentStep === 1} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded disabled:opacity-50">Previous</button>
+                {currentStep < totalSteps ? (
+                  <button type="button" onClick={nextStep} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Next</button>
+                ) : (
+                  <button type="button" onClick={submitData} className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded">Submit</button>
+                )}
+              </div>
+            </main>
           </div>
-          <div class="step-item flex items-center space-x-3" data-step="2">
-            <div class="step-circle">2</div>
-            <span class="step-title">Introduction</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="3">
-            <div class="step-circle">3</div>
-            <span class="step-title">Enterprise Structure</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="4">
-            <div class="step-circle">4</div>
-            <span class="step-title">Taxation &amp; Super</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="5">
-            <div class="step-circle">5</div>
-            <span class="step-title">Time Off / Leave</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="6">
-            <div class="step-circle">6</div>
-            <span class="step-title">Awards &amp; Agreements</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="7">
-            <div class="step-circle">7</div>
-            <span class="step-title">Payroll Processing</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="8">
-            <div class="step-circle">8</div>
-            <span class="step-title">Termination &amp; Redundancy</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="9">
-            <div class="step-circle">9</div>
-            <span class="step-title">AI Config Explainer</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="10">
-            <div class="step-circle">10</div>
-            <span class="step-title">Finance Integration</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="11">
-            <div class="step-circle">11</div>
-            <span class="step-title">Payroll Control Centre</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="12">
-            <div class="step-circle">12</div>
-            <span class="step-title">Interactive Payslip</span>
-          </div>
-          <div class="step-item flex items-center space-x-3" data-step="13">
-            <div class="step-circle">13</div>
-            <span class="step-title">Reporting &amp; Interfaces</span>
-          </div>
-        </nav>
-      </aside>
-      <!-- Form content -->
-      <main class="md:w-3/4 flex-1">
-        <div id="form-content" class="bg-white p-6 rounded-lg shadow">
-          <!-- Step 1 -->
-          <section id="step-1" class="form-section active">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">1. Project Details</h2>
-            <div class="grid gap-4">
-              <div>
-                <label for="customer-name" class="font-semibold text-gray-700">Customer Name</label>
-                <input type="text" id="customer-name" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Enter the customer's company name..." />
-              </div>
-              <div>
-                <label for="provider-name" class="font-semibold text-gray-700">Provider Name</label>
-                <input type="text" id="provider-name" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Enter the implementation provider's name..." />
-              </div>
-            </div>
-          </section>
-          <!-- Step 2 -->
-          <section id="step-2" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">2. Introduction</h2>
-            <div class="space-y-6">
-              <div>
-                <label for="overview" class="font-semibold text-gray-700">2.1 Overview</label>
-                <textarea id="overview" rows="4" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the overall objectives of the project..."></textarea>
-              </div>
-              <div>
-                <label for="purpose" class="font-semibold text-gray-700">2.2 Document Purpose</label>
-                <textarea id="purpose" rows="4" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="What is the purpose of this document?"></textarea>
-              </div>
-              <div>
-                <label for="scope" class="font-semibold text-gray-700">2.3 Project Scope</label>
-                <textarea id="scope" rows="4" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Outline the scope of the project..."></textarea>
-              </div>
-            </div>
-          </section>
-          <!-- Step 3 -->
-          <section id="step-3" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">3. Enterprise Structure</h2>
-            <div class="space-y-6">
-              <div>
-                <label for="company-code" class="font-semibold text-gray-700">3.1 Company Code &amp; Bank Details</label>
-                <textarea id="company-code" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the company codes and banking details..."></textarea>
-              </div>
-              <div>
-                <label for="locations" class="font-semibold text-gray-700">3.2 Locations / Personnel Subareas</label>
-                <textarea id="locations" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="List the key locations and personnel subareas..."></textarea>
-              </div>
-              <div>
-                <label for="employee-groupings" class="font-semibold text-gray-700">3.3 Employee Groupings</label>
-                <textarea id="employee-groupings" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the employee groupings (e.g. salaried, hourly)..."></textarea>
-              </div>
-              <div>
-                <label for="payroll-areas" class="font-semibold text-gray-700">3.4 Payroll Areas &amp; Pay Cycles</label>
-                <textarea id="payroll-areas" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Specify payroll areas and pay cycles..."></textarea>
-              </div>
-              <div>
-                <label for="pay-scale" class="font-semibold text-gray-700">3.5 Pay Scale Structure</label>
-                <textarea id="pay-scale" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the pay scale structure..."></textarea>
-              </div>
-            </div>
-          </section>
-          <!-- Step 4 -->
-          <section id="step-4" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">4. Taxation &amp; Superannuation</h2>
-            <div class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="termination-lump" class="font-semibold text-gray-700">4.1 Lump Sum D ($)</label>
-                  <input type="number" id="termination-lump" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="e.g. 13100" />
-                </div>
-                <div>
-                  <label for="termination-etp" class="font-semibold text-gray-700">4.1 ETP Indexed Cap ($)</label>
-                  <input type="number" id="termination-etp" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="e.g. 260,000" />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="super-guarantee" class="font-semibold text-gray-700">4.2 Super Guarantee %</label>
-                  <input type="number" id="super-guarantee" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="e.g. 12" />
-                </div>
-                <div>
-                  <label for="super-cap" class="font-semibold text-gray-700">4.2 Max Contribution Base ($)</label>
-                  <input type="number" id="super-cap" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="e.g. 62,500" />
-                </div>
-              </div>
-              <div>
-                <label for="payroll-tax-states" class="font-semibold text-gray-700">4.3 Payroll Tax (States)</label>
-                <textarea id="payroll-tax-states" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="List states where payroll tax applies..."></textarea>
-              </div>
-            </div>
-          </section>
-          <!-- Step 5 -->
-          <section id="step-5" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">5. Time Off / Leave</h2>
-            <div class="space-y-6">
-              <div>
-                <label for="leave-types" class="font-semibold text-gray-700">5.1 Annual &amp; Personal Leave</label>
-                <textarea id="leave-types" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the annual and personal leave entitlements..."></textarea>
-              </div>
-              <div>
-                <label for="long-service-leave" class="font-semibold text-gray-700">5.2 Long Service Leave (Rules)</label>
-                <textarea id="long-service-leave" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Provide rules for long service leave, including state variations..."></textarea>
-              </div>
-            </div>
-          </section>
-          <!-- Step 6 -->
-          <section id="step-6" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">6. Awards &amp; Agreements</h2>
-            <div class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="industry-select" class="font-semibold text-gray-700">6.1 Select an Industry</label>
-                  <select id="industry-select" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
-                    <option value="">Choose an industry...</option>
-                    <option value="education">Education</option>
-                    <option value="health">Healthcare</option>
-                    <option value="it">Information Technology</option>
-                    <option value="retail">Retail</option>
-                    <option value="hospitality">Hospitality</option>
-                  </select>
-                </div>
-                <div>
-                  <label for="award-select" class="font-semibold text-gray-700">6.2 Select a Specific Award</label>
-                  <select id="award-select" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
-                    <option value="">Choose an award...</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <button id="analyse-award-btn" type="button" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded" onclick="analyseAward()">Analyse Award</button>
-              </div>
-              <div id="award-result" class="mt-6 p-4 border rounded-md bg-gray-50 hidden">
-                <!-- Award analysis output will appear here -->
-              </div>
-            </div>
-          </section>
-          <!-- Step 7 -->
-          <section id="step-7" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">7. Payroll Processing &amp; Wage Types</h2>
-            <p class="text-gray-600 mb-4">Add payment and deduction items to define wage types used in your organisation.</p>
-            <div class="space-y-8">
-              <div>
-                <h3 class="text-lg font-semibold mb-2">Payments Catalogue</h3>
-                <table class="w-full text-sm border mb-2">
-                  <thead class="bg-gray-100">
-                    <tr>
-                      <th class="p-2 border">Name</th>
-                      <th class="p-2 border">Description</th>
-                      <th class="p-2 border">Taxable?</th>
-                      <th class="p-2 border">Super?</th>
-                      <th class="p-2 border">Remove</th>
-                    </tr>
-                  </thead>
-                  <tbody id="payment-table-body"></tbody>
-                </table>
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
-                  <input type="text" id="payment-name" placeholder="Name" class="p-2 border rounded-md" />
-                  <input type="text" id="payment-desc" placeholder="Description" class="p-2 border rounded-md" />
-                  <select id="payment-taxable" class="p-2 border rounded-md">
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                  <select id="payment-super" class="p-2 border rounded-md">
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                  <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded" onclick="addPayment()">Add Payment</button>
-                </div>
-              </div>
-              <div>
-                <h3 class="text-lg font-semibold mb-2">Deductions Catalogue</h3>
-                <table class="w-full text-sm border mb-2">
-                  <thead class="bg-gray-100">
-                    <tr>
-                      <th class="p-2 border">Name</th>
-                      <th class="p-2 border">Description</th>
-                      <th class="p-2 border">Remove</th>
-                    </tr>
-                  </thead>
-                    <tbody id="deduction-table-body"></tbody>
-                </table>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <input type="text" id="deduction-name" placeholder="Name" class="p-2 border rounded-md" />
-                  <input type="text" id="deduction-desc" placeholder="Description" class="p-2 border rounded-md" />
-                  <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded" onclick="addDeduction()">Add Deduction</button>
-                </div>
-              </div>
-            </div>
-          </section>
-          <!-- Step 8 -->
-          <section id="step-8" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">8. Termination &amp; Redundancy Configuration</h2>
-            <div class="space-y-6">
-              <div>
-                <h3 class="text-lg font-semibold mb-2">Final Pay Rules</h3>
-                <div class="space-y-2">
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="rule-accruals" class="h-4 w-4 text-blue-600" />
-                    <span>Pay out all accrued leave on termination</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="rule-pro-rata" class="h-4 w-4 text-blue-600" />
-                    <span>Calculate and pay pro-rata entitlements</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="rule-lsl" class="h-4 w-4 text-blue-600" />
-                    <span>Include long service leave in final pay</span>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <h3 class="text-lg font-semibold mb-2">Redundancy Pay Scale</h3>
-                <table class="w-full text-sm border mb-2">
-                  <thead class="bg-gray-100">
-                    <tr>
-                      <th class="p-2 border">Years of Service</th>
-                      <th class="p-2 border">Redundancy Pay (weeks)</th>
-                      <th class="p-2 border">Remove</th>
-                    </tr>
-                  </thead>
-                  <tbody id="redundancy-table-body"></tbody>
-                </table>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <input type="number" id="redundancy-years" placeholder="Years" class="p-2 border rounded-md" />
-                  <input type="number" id="redundancy-weeks" placeholder="Weeks" class="p-2 border rounded-md" />
-                  <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded" onclick="addRedundancy()">Add Row</button>
-                </div>
-              </div>
-            </div>
-          </section>
-          <!-- Step 9 -->
-          <section id="step-9" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">9. AI Config Explainer</h2>
-            <p class="text-gray-600 mb-2">Select a configuration area and specific setting to get a short explanation.</p>
-            <div class="space-y-4">
-              <div>
-                <label for="config-area" class="font-semibold text-gray-700">Configuration Area</label>
-                <select id="config-area" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" onchange="populateConfigValues()">
-                  <option value="">Choose an area...</option>
-                  <option value="tax">Taxation Processing (Class 21)</option>
-                  <option value="stp">STP Reporting (Eval Class 13)</option>
-                  <option value="payslip">Payslip Display (Eval Class 02)</option>
-                </select>
-              </div>
-              <div>
-                <label for="config-value" class="font-semibold text-gray-700">Specific Setting</label>
-                <select id="config-value" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500"></select>
-              </div>
-              <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded" onclick="explainConfig()">Explain</button>
-              <div id="config-output" class="mt-4 p-4 border rounded-md bg-gray-50 hidden"></div>
-            </div>
-          </section>
-          <!-- Step 10 -->
-          <section id="step-10" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">10. Finance Integration</h2>
-            <div class="space-y-6">
-              <div>
-                <label for="gl-accounts" class="font-semibold text-gray-700">10.1 Chart of Accounts &amp; Costing</label>
-                <textarea id="gl-accounts" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe GL accounts and costing structure..."></textarea>
-              </div>
-              <div>
-                <label for="posting-docs" class="font-semibold text-gray-700">10.2 Symbolic Accounts &amp; Posting</label>
-                <textarea id="posting-docs" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe symbolic accounts and posting rules..."></textarea>
-              </div>
-              <div>
-                <label for="al-oncost" class="font-semibold text-gray-700">Annual Leave On‑Cost (Escalation %)</label>
-                <input type="number" id="al-oncost" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="e.g. 12" />
-              </div>
-              <div>
-                <label for="feature13" class="font-semibold text-gray-700">End of Month Processing (Feature 13)</label>
-                <select id="feature13" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
-                  <option value="period">Period End Date</option>
-                  <option value="posting">Posting Date</option>
-                </select>
-              </div>
-            </div>
-          </section>
-          <!-- Step 11 -->
-          <section id="step-11" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">11. Understanding the Payroll Control Centre (PCC)</h2>
-            <p class="text-gray-600 mb-4">Select the key performance indicators and alerts that are relevant for your organisation.</p>
-            <div class="space-y-6">
-              <div>
-                <h3 class="text-lg font-semibold mb-2">Key Performance Indicators (KPIs)</h3>
-                <div class="space-y-2">
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="kpi-gross-pay" class="h-4 w-4 text-blue-600" />
-                    <span>Gross Pay Comparison</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="kpi-headcount" class="h-4 w-4 text-blue-600" />
-                    <span>Headcount Reconciliation</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="kpi-net-pay" class="h-4 w-4 text-blue-600" />
-                    <span>Net Pay Variance</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="kpi-master-data" class="h-4 w-4 text-blue-600" />
-                    <span>Master Data Changes</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="kpi-off-cycle" class="h-4 w-4 text-blue-600" />
-                    <span>Off‑Cycle Payment Count</span>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <h3 class="text-lg font-semibold mb-2">Alerts (Validation Rules)</h3>
-                <div class="space-y-2">
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="alert-bank" class="h-4 w-4 text-blue-600" />
-                    <span>Missing Bank Details</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="alert-overtime" class="h-4 w-4 text-blue-600" />
-                    <span>Excessive Overtime Hours</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="alert-negative" class="h-4 w-4 text-blue-600" />
-                    <span>Negative Net Pay</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="alert-unpaid-leave" class="h-4 w-4 text-blue-600" />
-                    <span>Unpaid Leave Without Quota</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="alert-gross-variance" class="h-4 w-4 text-blue-600" />
-                    <span>High Gross Pay Variance</span>
-                  </label>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="alert-post-term" class="h-4 w-4 text-blue-600" />
-                    <span>Employee Paid After Termination Date</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </section>
-          <!-- Step 12 -->
-          <section id="step-12" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">12. Interactive Payslip</h2>
-            <p class="text-gray-600 mb-4">Click the button below to view a sample payslip. This can help you visualise the components of a typical Australian payslip.</p>
-            <button type="button" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded" onclick="togglePayslip()">Show Payslip</button>
-            <div id="payslip-container" class="mt-6 hidden">
-              <img id="payslip-image" alt="Sample Payslip" class="max-w-full rounded border" />
-            </div>
-          </section>
-          <!-- Step 13 -->
-          <section id="step-13" class="form-section">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-700">13. Reporting &amp; Interfaces</h2>
-            <p class="text-gray-600 mb-4">Identify the SAP reports and interfaces required for the project. You can use the tables below to list reports in scope and any external interfaces.</p>
-            <div class="space-y-6">
-              <div>
-                <h3 class="text-lg font-semibold mb-2">Payroll Reports</h3>
-                <table class="w-full text-sm border mb-2">
-                  <thead class="bg-gray-100">
-                    <tr>
-                      <th class="p-2 border text-center">In Scope?</th>
-                      <th class="p-2 border">Report Name</th>
-                      <th class="p-2 border">Program</th>
-                      <th class="p-2 border">Transaction</th>
-                      <th class="p-2 border">Remove</th>
-                    </tr>
-                  </thead>
-                  <tbody id="payroll-reports-body"></tbody>
-                </table>
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
-                  <select id="report-in-scope" class="p-2 border rounded-md">
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
-                  <input type="text" id="report-name" placeholder="Report name" class="p-2 border rounded-md" />
-                  <input type="text" id="report-program" placeholder="Program" class="p-2 border rounded-md" />
-                  <input type="text" id="report-transaction" placeholder="Transaction" class="p-2 border rounded-md" />
-                  <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded" onclick="addPayrollReport()">Add Report</button>
-                </div>
-              </div>
-              <div>
-                <h3 class="text-lg font-semibold mb-2">Interfaces / Integrations</h3>
-                <table class="w-full text-sm border mb-2">
-                  <thead class="bg-gray-100">
-                    <tr>
-                      <th class="p-2 border text-center">Direction</th>
-                      <th class="p-2 border">System</th>
-                      <th class="p-2 border">Description</th>
-                      <th class="p-2 border">Remove</th>
-                    </tr>
-                  </thead>
-                  <tbody id="interface-table-body"></tbody>
-                </table>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-                  <select id="interface-direction" class="p-2 border rounded-md">
-                    <option value="Inbound">Inbound</option>
-                    <option value="Outbound">Outbound</option>
-                  </select>
-                  <input type="text" id="interface-system" placeholder="System (e.g. SAP FI)" class="p-2 border rounded-md" />
-                  <input type="text" id="interface-desc" placeholder="Description" class="p-2 border rounded-md" />
-                  <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded" onclick="addInterface()">Add Interface</button>
-                </div>
-              </div>
-            </div>
-          </section>
         </div>
-        <!-- Navigation buttons -->
-        <div class="flex justify-between mt-6">
-          <button id="prevBtn" type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded disabled:opacity-50" onclick="prevStep()">Previous</button>
-          <!-- Next button shown on all but final step -->
-          <button id="nextBtn" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded" onclick="nextStep()">Next</button>
-          <!-- Submit button shown on final step only -->
-          <button id="submitBtn" type="button" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded hidden" onclick="submitData()">Submit</button>
-        </div>
-      </main>
-    </div>
-  </div>
-  <!-- JavaScript functionality -->
-  <script src="script.js"></script>
+      );
+    }
+
+    // Render the app
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
 </body>
 </html>
