@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAP Australian Payroll Workshop Tool</title>
+  <!-- Tailwind CSS via CDN for quick styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom styles for the stepper */
+    .step-item .step-circle {
+      @apply w-8 h-8 flex items-center justify-center rounded-full border-2 border-gray-400 text-gray-600 font-medium transition-colors duration-300;
+    }
+    .step-item.active .step-circle {
+      @apply bg-blue-600 border-blue-600 text-white;
+    }
+    .step-item.completed .step-circle {
+      @apply bg-green-600 border-green-600 text-white;
+    }
+    .step-item .step-title {
+      @apply text-gray-600 font-medium;
+    }
+    .step-item.active .step-title {
+      @apply text-blue-700 font-semibold;
+    }
+    .step-item.completed .step-title {
+      @apply text-green-700;
+    }
+    .form-section {
+      display: none;
+    }
+    .form-section.active {
+      display: block;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <div class="container mx-auto px-4 py-8">
+    <header class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-blue-700">SAP Australian Payroll Implementation</h1>
+      <p class="text-gray-600 mt-2">Requirements Gathering Workshop Tool</p>
+    </header>
+    <div class="flex flex-col md:flex-row gap-8">
+      <!-- Stepper -->
+      <aside class="md:w-1/4">
+        <nav id="stepper" class="space-y-4">
+          <!-- Step definitions. Each step-item will be manipulated via JS -->
+          <div class="step-item flex items-center space-x-3" data-step="1">
+            <div class="step-circle">1</div>
+            <span class="step-title">Project Details</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="2">
+            <div class="step-circle">2</div>
+            <span class="step-title">Introduction</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="3">
+            <div class="step-circle">3</div>
+            <span class="step-title">Enterprise Structure</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="4">
+            <div class="step-circle">4</div>
+            <span class="step-title">Taxation &amp; Super</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="5">
+            <div class="step-circle">5</div>
+            <span class="step-title">Time Off / Leave</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="6">
+            <div class="step-circle">6</div>
+            <span class="step-title">Awards &amp; Agreements</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="7">
+            <div class="step-circle">7</div>
+            <span class="step-title">Payroll Processing</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="8">
+            <div class="step-circle">8</div>
+            <span class="step-title">Termination &amp; Redundancy</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="9">
+            <div class="step-circle">9</div>
+            <span class="step-title">AI Config Explainer</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="10">
+            <div class="step-circle">10</div>
+            <span class="step-title">Finance Integration</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="11">
+            <div class="step-circle">11</div>
+            <span class="step-title">Payroll Control Centre</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="12">
+            <div class="step-circle">12</div>
+            <span class="step-title">Interactive Payslip</span>
+          </div>
+          <div class="step-item flex items-center space-x-3" data-step="13">
+            <div class="step-circle">13</div>
+            <span class="step-title">Reporting &amp; Interfaces</span>
+          </div>
+        </nav>
+      </aside>
+      <!-- Form content -->
+      <main class="md:w-3/4 flex-1">
+        <div id="form-content" class="bg-white p-6 rounded-lg shadow">
+          <!-- Step 1 -->
+          <section id="step-1" class="form-section active">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">1. Project Details</h2>
+            <div class="grid gap-4">
+              <div>
+                <label for="customer-name" class="font-semibold text-gray-700">Customer Name</label>
+                <input type="text" id="customer-name" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Enter the customer's company name..." />
+              </div>
+              <div>
+                <label for="provider-name" class="font-semibold text-gray-700">Provider Name</label>
+                <input type="text" id="provider-name" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Enter the implementation provider's name..." />
+              </div>
+            </div>
+          </section>
+          <!-- Step 2 -->
+          <section id="step-2" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">2. Introduction</h2>
+            <div class="space-y-6">
+              <div>
+                <label for="overview" class="font-semibold text-gray-700">2.1 Overview</label>
+                <textarea id="overview" rows="4" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the overall objectives of the project..."></textarea>
+              </div>
+              <div>
+                <label for="purpose" class="font-semibold text-gray-700">2.2 Document Purpose</label>
+                <textarea id="purpose" rows="4" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="What is the purpose of this document?"></textarea>
+              </div>
+              <div>
+                <label for="scope" class="font-semibold text-gray-700">2.3 Project Scope</label>
+                <textarea id="scope" rows="4" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Outline the scope of the project..."></textarea>
+              </div>
+            </div>
+          </section>
+          <!-- Step 3 -->
+          <section id="step-3" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">3. Enterprise Structure</h2>
+            <div class="space-y-6">
+              <div>
+                <label for="company-code" class="font-semibold text-gray-700">3.1 Company Code &amp; Bank Details</label>
+                <textarea id="company-code" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the company codes and banking details..."></textarea>
+              </div>
+              <div>
+                <label for="locations" class="font-semibold text-gray-700">3.2 Locations / Personnel Subareas</label>
+                <textarea id="locations" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="List the key locations and personnel subareas..."></textarea>
+              </div>
+              <div>
+                <label for="employee-groupings" class="font-semibold text-gray-700">3.3 Employee Groupings</label>
+                <textarea id="employee-groupings" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the employee groupings (e.g. salaried, hourly)..."></textarea>
+              </div>
+              <div>
+                <label for="payroll-areas" class="font-semibold text-gray-700">3.4 Payroll Areas &amp; Pay Cycles</label>
+                <textarea id="payroll-areas" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Specify payroll areas and pay cycles..."></textarea>
+              </div>
+              <div>
+                <label for="pay-scale" class="font-semibold text-gray-700">3.5 Pay Scale Structure</label>
+                <textarea id="pay-scale" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the pay scale structure..."></textarea>
+              </div>
+            </div>
+          </section>
+          <!-- Step 4 -->
+          <section id="step-4" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">4. Taxation &amp; Superannuation</h2>
+            <div class="space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="termination-lump" class="font-semibold text-gray-700">4.1 Lump Sum D ($)</label>
+                  <input type="number" id="termination-lump" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="e.g. 13100" />
+                </div>
+                <div>
+                  <label for="termination-etp" class="font-semibold text-gray-700">4.1 ETP Indexed Cap ($)</label>
+                  <input type="number" id="termination-etp" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="e.g. 260,000" />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="super-guarantee" class="font-semibold text-gray-700">4.2 Super Guarantee %</label>
+                  <input type="number" id="super-guarantee" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="e.g. 12" />
+                </div>
+                <div>
+                  <label for="super-cap" class="font-semibold text-gray-700">4.2 Max Contribution Base ($)</label>
+                  <input type="number" id="super-cap" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="e.g. 62,500" />
+                </div>
+              </div>
+              <div>
+                <label for="payroll-tax-states" class="font-semibold text-gray-700">4.3 Payroll Tax (States)</label>
+                <textarea id="payroll-tax-states" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="List states where payroll tax applies..."></textarea>
+              </div>
+            </div>
+          </section>
+          <!-- Step 5 -->
+          <section id="step-5" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">5. Time Off / Leave</h2>
+            <div class="space-y-6">
+              <div>
+                <label for="leave-types" class="font-semibold text-gray-700">5.1 Annual &amp; Personal Leave</label>
+                <textarea id="leave-types" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe the annual and personal leave entitlements..."></textarea>
+              </div>
+              <div>
+                <label for="long-service-leave" class="font-semibold text-gray-700">5.2 Long Service Leave (Rules)</label>
+                <textarea id="long-service-leave" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Provide rules for long service leave, including state variations..."></textarea>
+              </div>
+            </div>
+          </section>
+          <!-- Step 6 -->
+          <section id="step-6" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">6. Awards &amp; Agreements</h2>
+            <div class="space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="industry-select" class="font-semibold text-gray-700">6.1 Select an Industry</label>
+                  <select id="industry-select" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                    <option value="">Choose an industry...</option>
+                    <option value="education">Education</option>
+                    <option value="health">Healthcare</option>
+                    <option value="it">Information Technology</option>
+                    <option value="retail">Retail</option>
+                    <option value="hospitality">Hospitality</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="award-select" class="font-semibold text-gray-700">6.2 Select a Specific Award</label>
+                  <select id="award-select" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                    <option value="">Choose an award...</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <button id="analyse-award-btn" type="button" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded" onclick="analyseAward()">Analyse Award</button>
+              </div>
+              <div id="award-result" class="mt-6 p-4 border rounded-md bg-gray-50 hidden">
+                <!-- Award analysis output will appear here -->
+              </div>
+            </div>
+          </section>
+          <!-- Step 7 -->
+          <section id="step-7" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">7. Payroll Processing &amp; Wage Types</h2>
+            <p class="text-gray-600 mb-4">Add payment and deduction items to define wage types used in your organisation.</p>
+            <div class="space-y-8">
+              <div>
+                <h3 class="text-lg font-semibold mb-2">Payments Catalogue</h3>
+                <table class="w-full text-sm border mb-2">
+                  <thead class="bg-gray-100">
+                    <tr>
+                      <th class="p-2 border">Name</th>
+                      <th class="p-2 border">Description</th>
+                      <th class="p-2 border">Taxable?</th>
+                      <th class="p-2 border">Super?</th>
+                      <th class="p-2 border">Remove</th>
+                    </tr>
+                  </thead>
+                  <tbody id="payment-table-body"></tbody>
+                </table>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+                  <input type="text" id="payment-name" placeholder="Name" class="p-2 border rounded-md" />
+                  <input type="text" id="payment-desc" placeholder="Description" class="p-2 border rounded-md" />
+                  <select id="payment-taxable" class="p-2 border rounded-md">
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                  <select id="payment-super" class="p-2 border rounded-md">
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                  <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded" onclick="addPayment()">Add Payment</button>
+                </div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-2">Deductions Catalogue</h3>
+                <table class="w-full text-sm border mb-2">
+                  <thead class="bg-gray-100">
+                    <tr>
+                      <th class="p-2 border">Name</th>
+                      <th class="p-2 border">Description</th>
+                      <th class="p-2 border">Remove</th>
+                    </tr>
+                  </thead>
+                    <tbody id="deduction-table-body"></tbody>
+                </table>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <input type="text" id="deduction-name" placeholder="Name" class="p-2 border rounded-md" />
+                  <input type="text" id="deduction-desc" placeholder="Description" class="p-2 border rounded-md" />
+                  <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded" onclick="addDeduction()">Add Deduction</button>
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- Step 8 -->
+          <section id="step-8" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">8. Termination &amp; Redundancy Configuration</h2>
+            <div class="space-y-6">
+              <div>
+                <h3 class="text-lg font-semibold mb-2">Final Pay Rules</h3>
+                <div class="space-y-2">
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="rule-accruals" class="h-4 w-4 text-blue-600" />
+                    <span>Pay out all accrued leave on termination</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="rule-pro-rata" class="h-4 w-4 text-blue-600" />
+                    <span>Calculate and pay pro-rata entitlements</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="rule-lsl" class="h-4 w-4 text-blue-600" />
+                    <span>Include long service leave in final pay</span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-2">Redundancy Pay Scale</h3>
+                <table class="w-full text-sm border mb-2">
+                  <thead class="bg-gray-100">
+                    <tr>
+                      <th class="p-2 border">Years of Service</th>
+                      <th class="p-2 border">Redundancy Pay (weeks)</th>
+                      <th class="p-2 border">Remove</th>
+                    </tr>
+                  </thead>
+                  <tbody id="redundancy-table-body"></tbody>
+                </table>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <input type="number" id="redundancy-years" placeholder="Years" class="p-2 border rounded-md" />
+                  <input type="number" id="redundancy-weeks" placeholder="Weeks" class="p-2 border rounded-md" />
+                  <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded" onclick="addRedundancy()">Add Row</button>
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- Step 9 -->
+          <section id="step-9" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">9. AI Config Explainer</h2>
+            <p class="text-gray-600 mb-2">Select a configuration area and specific setting to get a short explanation.</p>
+            <div class="space-y-4">
+              <div>
+                <label for="config-area" class="font-semibold text-gray-700">Configuration Area</label>
+                <select id="config-area" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" onchange="populateConfigValues()">
+                  <option value="">Choose an area...</option>
+                  <option value="tax">Taxation Processing (Class 21)</option>
+                  <option value="stp">STP Reporting (Eval Class 13)</option>
+                  <option value="payslip">Payslip Display (Eval Class 02)</option>
+                </select>
+              </div>
+              <div>
+                <label for="config-value" class="font-semibold text-gray-700">Specific Setting</label>
+                <select id="config-value" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500"></select>
+              </div>
+              <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded" onclick="explainConfig()">Explain</button>
+              <div id="config-output" class="mt-4 p-4 border rounded-md bg-gray-50 hidden"></div>
+            </div>
+          </section>
+          <!-- Step 10 -->
+          <section id="step-10" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">10. Finance Integration</h2>
+            <div class="space-y-6">
+              <div>
+                <label for="gl-accounts" class="font-semibold text-gray-700">10.1 Chart of Accounts &amp; Costing</label>
+                <textarea id="gl-accounts" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe GL accounts and costing structure..."></textarea>
+              </div>
+              <div>
+                <label for="posting-docs" class="font-semibold text-gray-700">10.2 Symbolic Accounts &amp; Posting</label>
+                <textarea id="posting-docs" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Describe symbolic accounts and posting rules..."></textarea>
+              </div>
+              <div>
+                <label for="al-oncost" class="font-semibold text-gray-700">Annual Leave On‑Cost (Escalation %)</label>
+                <input type="number" id="al-oncost" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="e.g. 12" />
+              </div>
+              <div>
+                <label for="feature13" class="font-semibold text-gray-700">End of Month Processing (Feature 13)</label>
+                <select id="feature13" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                  <option value="period">Period End Date</option>
+                  <option value="posting">Posting Date</option>
+                </select>
+              </div>
+            </div>
+          </section>
+          <!-- Step 11 -->
+          <section id="step-11" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">11. Understanding the Payroll Control Centre (PCC)</h2>
+            <p class="text-gray-600 mb-4">Select the key performance indicators and alerts that are relevant for your organisation.</p>
+            <div class="space-y-6">
+              <div>
+                <h3 class="text-lg font-semibold mb-2">Key Performance Indicators (KPIs)</h3>
+                <div class="space-y-2">
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="kpi-gross-pay" class="h-4 w-4 text-blue-600" />
+                    <span>Gross Pay Comparison</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="kpi-headcount" class="h-4 w-4 text-blue-600" />
+                    <span>Headcount Reconciliation</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="kpi-net-pay" class="h-4 w-4 text-blue-600" />
+                    <span>Net Pay Variance</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="kpi-master-data" class="h-4 w-4 text-blue-600" />
+                    <span>Master Data Changes</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="kpi-off-cycle" class="h-4 w-4 text-blue-600" />
+                    <span>Off‑Cycle Payment Count</span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-2">Alerts (Validation Rules)</h3>
+                <div class="space-y-2">
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="alert-bank" class="h-4 w-4 text-blue-600" />
+                    <span>Missing Bank Details</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="alert-overtime" class="h-4 w-4 text-blue-600" />
+                    <span>Excessive Overtime Hours</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="alert-negative" class="h-4 w-4 text-blue-600" />
+                    <span>Negative Net Pay</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="alert-unpaid-leave" class="h-4 w-4 text-blue-600" />
+                    <span>Unpaid Leave Without Quota</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="alert-gross-variance" class="h-4 w-4 text-blue-600" />
+                    <span>High Gross Pay Variance</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="alert-post-term" class="h-4 w-4 text-blue-600" />
+                    <span>Employee Paid After Termination Date</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- Step 12 -->
+          <section id="step-12" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">12. Interactive Payslip</h2>
+            <p class="text-gray-600 mb-4">Click the button below to view a sample payslip. This can help you visualise the components of a typical Australian payslip.</p>
+            <button type="button" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded" onclick="togglePayslip()">Show Payslip</button>
+            <div id="payslip-container" class="mt-6 hidden">
+              <img id="payslip-image" alt="Sample Payslip" class="max-w-full rounded border" />
+            </div>
+          </section>
+          <!-- Step 13 -->
+          <section id="step-13" class="form-section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">13. Reporting &amp; Interfaces</h2>
+            <p class="text-gray-600 mb-4">Identify the SAP reports and interfaces required for the project. You can use the tables below to list reports in scope and any external interfaces.</p>
+            <div class="space-y-6">
+              <div>
+                <h3 class="text-lg font-semibold mb-2">Payroll Reports</h3>
+                <table class="w-full text-sm border mb-2">
+                  <thead class="bg-gray-100">
+                    <tr>
+                      <th class="p-2 border text-center">In Scope?</th>
+                      <th class="p-2 border">Report Name</th>
+                      <th class="p-2 border">Program</th>
+                      <th class="p-2 border">Transaction</th>
+                      <th class="p-2 border">Remove</th>
+                    </tr>
+                  </thead>
+                  <tbody id="payroll-reports-body"></tbody>
+                </table>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+                  <select id="report-in-scope" class="p-2 border rounded-md">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <input type="text" id="report-name" placeholder="Report name" class="p-2 border rounded-md" />
+                  <input type="text" id="report-program" placeholder="Program" class="p-2 border rounded-md" />
+                  <input type="text" id="report-transaction" placeholder="Transaction" class="p-2 border rounded-md" />
+                  <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded" onclick="addPayrollReport()">Add Report</button>
+                </div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-2">Interfaces / Integrations</h3>
+                <table class="w-full text-sm border mb-2">
+                  <thead class="bg-gray-100">
+                    <tr>
+                      <th class="p-2 border text-center">Direction</th>
+                      <th class="p-2 border">System</th>
+                      <th class="p-2 border">Description</th>
+                      <th class="p-2 border">Remove</th>
+                    </tr>
+                  </thead>
+                  <tbody id="interface-table-body"></tbody>
+                </table>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                  <select id="interface-direction" class="p-2 border rounded-md">
+                    <option value="Inbound">Inbound</option>
+                    <option value="Outbound">Outbound</option>
+                  </select>
+                  <input type="text" id="interface-system" placeholder="System (e.g. SAP FI)" class="p-2 border rounded-md" />
+                  <input type="text" id="interface-desc" placeholder="Description" class="p-2 border rounded-md" />
+                  <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded" onclick="addInterface()">Add Interface</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+        <!-- Navigation buttons -->
+        <div class="flex justify-between mt-6">
+          <button id="prevBtn" type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded disabled:opacity-50" onclick="prevStep()">Previous</button>
+          <button id="nextBtn" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded" onclick="nextStep()">Next</button>
+        </div>
+      </main>
+    </div>
+  </div>
+  <!-- JavaScript functionality -->
+  <script src="script.js"></script>
+</body>
+</html>
